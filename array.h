@@ -2,7 +2,8 @@
 #define ARRAY_H
 #include <stddef.h>
 #include <stdint.h>
-
+#define SIZ(arr) (arr->size)
+#define CAP(arr) (arr->capacity)
 typedef struct
 {
     uintptr_t **d;
@@ -15,6 +16,8 @@ typedef struct
     array_t *origin;
     void *data;
 } push_result_t;
+
+typedef array_t *ARRAY;
 
 array_t *new_array(size_t capacity);
 push_result_t arr_push(array_t *arr, void *data);

@@ -30,6 +30,7 @@ array_t *grow(array_t *arr)
         new_d[i] = arr->d[i];
     free(arr->d);
     arr->d = new_d;
+    arr->capacity = new_capacity;
     return (arr);
 }
 
@@ -39,7 +40,7 @@ push_result_t arr_push(array_t *arr, void *data)
         return ((push_result_t){.data = NULL, .origin = NULL});
     if (!arr->d)
         return ((push_result_t){.data = NULL, .origin = arr});
-    if (arr->size + 1 > arr->capacity / 2)
+    if ((arr->size + 1) > (arr->capacity / 2))
     {
         array_t *nptr = grow(arr);
         if (!nptr)
@@ -60,6 +61,7 @@ void *arr_pop(array_t *arr)
         return (0);
     void *data = arr->d[arr->size - 1];
     arr->d[arr->size - 1] = NULL;
+    arr->size--;
     return (data);
 }
 
