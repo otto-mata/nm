@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 int main(int argc, char **argv)
 {
@@ -39,13 +40,13 @@ int main(int argc, char **argv)
     }
     else
     {
-        file_data_p = mmap(NULL, statbuf.st_size, PROT_READ, MAP_FILE, fd, 0);
-        if (!file_data_p)
+        file_data_p = mmap(NULL, (statbuf.st_size / getpagesize()) + 1, PROT_READ, MAP_SHARED, fd, 0);
+        if ((uintptr_t)file_data_p == ~0)
         {
             perror("mmap");
             close(fd);
             return (6);
         }
     }
-    __builtin_dump_struct(&statbuf, &printf);
+    write(STDOUT_FILENO, file_data_p, statbuf.st_size);
 }
