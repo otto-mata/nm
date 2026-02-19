@@ -36,6 +36,7 @@ int main(int argc, char **argv)
     {
         if (parse_file(files[i]))
         {
+            fprintf(stderr, "Could not parse file '%s', exiting.\n", files[i]);
             free(files);
             return (1);
         }

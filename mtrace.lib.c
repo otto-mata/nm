@@ -9,7 +9,7 @@ static void (*real_free)(void *) = NULL;
 static void *(*real_mmap)(void *, size_t, int, int, int, off_t) = NULL;
 static int (*real_munmap)(void *, size_t) = NULL;
 
-static void mtrace_init(void)
+void __attribute__((constructor)) mtrace_init(void)
 {
     real_malloc = dlsym(RTLD_NEXT, "malloc");
     real_free = dlsym(RTLD_NEXT, "free");
@@ -20,6 +20,7 @@ static void mtrace_init(void)
     {
         fprintf(stderr, "Error in `dlsym`: %s\n", dlerror());
     }
+    fprintf(stderr, "[mtrace] Init successful\n");
 }
 
 void *malloc(size_t size)

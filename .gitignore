@@ -1,0 +1,5 @@
+*.o
+*.so
+nm
+a.out
+mtrace

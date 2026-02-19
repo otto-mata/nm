@@ -8,11 +8,13 @@
 
 int parse32(Elf32_Ehdr *content)
 {
+    __builtin_dump_struct(content, &printf);
     return (0);
 }
 
 int parse64(Elf64_Ehdr *content)
 {
+    __builtin_dump_struct(content, &printf);
     return (0);
 }
 
@@ -20,7 +22,10 @@ int parse_file(char *path)
 {
     int fd = open(path, O_RDONLY);
     if (fd < 0)
+    {
+        perror("open");
         return (2);
+    }
 
     struct stat statbuf;
 
