@@ -1,57 +1,70 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <elf.h>
+#include "elfxx.h"
 
-int parse32(Elf32_Ehdr *content)
+static int parse32(void *content, size_t size)
 {
-    __builtin_dump_struct(content, &printf);
-    return (0);
+	elf32_t *elf = elf32_new(content, size);
+	if (!elf)
+		return (1);
+	free(elf);
+	return (0);
 }
 
-int parse64(Elf64_Ehdr *content)
+static int parse64(void *content, size_t size)
 {
-    __builtin_dump_struct(content, &printf);
-    return (0);
+	elf64_t *elf = elf64_new(content, size);
+	if (!elf)
+		return (1);
+	elf64_show_sections(elf);
+	elf64_show_symbols(elf);
+	free(elf);
+	return (0);
 }
 
 int parse_file(char *path)
 {
-    int fd = open(path, O_RDONLY);
-    if (fd < 0)
-    {
-        perror("open");
-        return (2);
-    }
+	int fd = open(path, O_RDONLY);
+	if (fd < 0)
+	{
+		perror("open");
+		return (2);
+	}
 
-    struct stat statbuf;
+	struct stat st;
 
-    if (fstat(fd, &statbuf))
-    {
-        perror("fstat");
-        close(fd);
-        return (3);
-    }
+	if (fstat(fd, &st))
+	{
+		perror("fstat");
+		close(fd);
+		return (3);
+	}
 
-    void *content = mmap(NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    if (content == MAP_FAILED)
-    {
-        perror("mmap");
-        close(fd);
-        return (6);
-    }
-    int ret = 0;
-    unsigned char type = ((unsigned char *)content)[4];
-    if (type == 2)
-        ret = parse64(content);
-    else if (type == 1)
-        ret = parse32(content);
-    else
-        ret = 1;
-    munmap(content, statbuf.st_size);
-    close(fd);
-    return (ret);
+	void *content = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	if (content == MAP_FAILED)
+	{
+		perror("mmap");
+		close(fd);
+		return (6);
+	}
+	int ret = 0;
+
+	switch (((unsigned char *)content)[4])
+	{
+	case 1:
+		parse32(content, st.st_size);
+
+		break;
+	case 2:
+		parse64(content, st.st_size);
+		break;
+	}
+	munmap(content, st.st_size);
+	close(fd);
+	return (ret);
 }

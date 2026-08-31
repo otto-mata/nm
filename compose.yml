@@ -1,0 +1,9 @@
+services:
+  nm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nm
+    volumes:
+      - .:/ft_nm
+    working_dir: /ft_nm

@@ -3,3 +3,5 @@
 nm
 a.out
 mtrace
+vgcore.*
+sample.*

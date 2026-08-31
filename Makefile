@@ -1,20 +1,21 @@
 NAME:=nm
 CC:=clang
-CFLAGS:=-Wall -Wextra -Werror
-SRC:=parse.c main.c
+CFLAGS:=-Wall -Wextra -Werror -g
+SRC:=parse.c main.c elf32.c elf64.c
 OBJ:=$(SRC:.c=.o)
 
-MT_SRC := mtrace.main.c
-MT_OBJ := $(MT_SRC:.c=.o)
 all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
-mtrace.so: mtrace.lib.c
-	$(CC) $(CFLAGS) -shared -fPIC -o $@ $^
+clean:
+	rm -f $(OBJ)
 
-mtrace-bin: $(MT_OBJ)
-	$(CC) $(CFLAGS) -o mtrace $^
+fclean: clean
+	rm -f $(NAME)
 
-mtrace: mtrace.so mtrace-bin
+re: fclean all
+
+i686-sample:
+	gcc -m32 -Wall -Wextra read.mmap.c -o sample.i686
