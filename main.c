@@ -5,7 +5,7 @@ int parse_file(char *path);
 
 int main(int argc, char **argv)
 {
-
+	setbuf(stdout, 0);
 	char **files = NULL;
 	int nfiles = 0;
 	if (argc > 1)
