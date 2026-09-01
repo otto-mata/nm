@@ -1,6 +1,6 @@
 NAME:=nm
 CC:=clang
-CFLAGS:=-Wall -Wextra -Werror -g
+CFLAGS:=-Wall -Wextra -Werror -g 
 SRC:=parse.c main.c elf32.c elf64.c
 OBJ:=$(SRC:.c=.o)
 

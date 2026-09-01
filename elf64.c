@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
+#include "bfd-flags.h"
 
 static elf64_t *elf = NULL;
 
@@ -19,9 +20,9 @@ static char *elf64_get_section_name(Elf64_Shdr *sctn)
 	return &shstrdata[sctn->sh_name];
 }
 
-static char *elf64_get_section_name_by_ndx(int ndx)
+static Elf64_Shdr *elf64_get_section_by_ndx(int ndx)
 {
-	return elf64_get_section_name(&elf->section_headers[ndx]);
+	return &elf->section_headers[ndx];
 }
 
 static Elf64_Shdr *elf64_get_section_by_name(const char *name)
@@ -76,30 +77,138 @@ void elf64_show_sections()
 	}
 }
 
-void print_symbol_type(Elf64_Sym *sym)
+/*
+
+  if (hdr->sh_type != SHT_NOBITS)
+	flags |= SEC_HAS_CONTENTS;
+  if (hdr->sh_type == SHT_GROUP)
+	flags |= SEC_GROUP;
+  if ((hdr->sh_flags & SHF_ALLOC) != 0)
+	{
+	  flags |= SEC_ALLOC;
+	  if (hdr->sh_type != SHT_NOBITS)
+		flags |= SEC_LOAD;
+	}
+  if ((hdr->sh_flags & SHF_WRITE) == 0)
+	flags |= SEC_READONLY;
+  if ((hdr->sh_flags & SHF_EXECINSTR) != 0)
+	flags |= SEC_CODE;
+  else if ((flags & SEC_LOAD) != 0)
+	flags |= SEC_DATA;
+  if ((hdr->sh_flags & SHF_MERGE) != 0)
+	flags |= SEC_MERGE;
+  if ((hdr->sh_flags & SHF_STRINGS) != 0)
+	flags |= SEC_STRINGS;
+  if ((hdr->sh_flags & SHF_TLS) != 0)
+	flags |= SEC_THREAD_LOCAL;
+  if ((hdr->sh_flags & SHF_EXCLUDE) != 0)
+	flags |= SEC_EXCLUDE;
+
+*/
+
+static uint32_t elf_get_flags_for_section(Elf64_Shdr *hdr)
 {
-	char *sctn_name = elf64_get_section_name_by_ndx(sym->st_shndx);
-	if (!sym->st_value)
+	uint32_t flags = 0;
+
+	if (hdr->sh_type != SHT_NOBITS)
+		flags |= SEC_HAS_CONTENTS;
+	if (hdr->sh_type == SHT_GROUP)
+		flags |= SEC_GROUP;
+	if ((hdr->sh_flags & SHF_ALLOC) != 0)
 	{
-		if (ELF64_ST_BIND(sym->st_info) == STB_WEAK)
-			printf(" w");
+		flags |= SEC_ALLOC;
+		if (hdr->sh_type != SHT_NOBITS)
+			flags |= SEC_LOAD;
+	}
+	if ((hdr->sh_flags & SHF_WRITE) == 0)
+		flags |= SEC_READONLY;
+	if ((hdr->sh_flags & SHF_EXECINSTR) != 0)
+		flags |= SEC_CODE;
+	else if ((flags & SEC_LOAD) != 0)
+		flags |= SEC_DATA;
+	if ((hdr->sh_flags & SHF_MERGE) != 0)
+		flags |= SEC_MERGE;
+	if ((hdr->sh_flags & SHF_STRINGS) != 0)
+		flags |= SEC_STRINGS;
+	if ((hdr->sh_flags & SHF_TLS) != 0)
+		flags |= SEC_THREAD_LOCAL;
+	if ((hdr->sh_flags & SHF_EXCLUDE) != 0)
+		flags |= SEC_EXCLUDE;
+	return flags;
+}
+
+char section_type(Elf64_Shdr *section)
+{
+	uint32_t flags = elf_get_flags_for_section(section);
+	if (flags & SEC_CODE)
+		return 't';
+	if (flags & SEC_DATA)
+	{
+		if (flags & SEC_READONLY)
+			return 'r';
+		else if (flags & SEC_SMALL_DATA)
+			return 'g';
 		else
-			printf(" U");
-		return;
+			return 'd';
 	}
-	if (!sctn_name)
+	if (!(flags & SEC_HAS_CONTENTS))
 	{
-		printf("  ");
-		return;
+		if (flags & SEC_SMALL_DATA)
+			return 's';
+		else
+			return 'b';
 	}
-	char c = sctn_name[1];
-	if (c == 't' && ELF64_ST_BIND(sym->st_info) == STB_LOCAL)
-		c = 'T';
-	else if (ELF64_ST_BIND(sym->st_info) == STB_GLOBAL)
-		c -= 32;
-	else if (ELF64_ST_BIND(sym->st_info) == STB_WEAK)
-		c = 'W';
-	printf(" %c", c);
+	// if (flags & SEC_DEBUGGING)
+	// 	return 'N';
+	// if ((flags & SEC_HAS_CONTENTS) && (flags & SEC_READONLY))
+	// 	return 'n';
+	return '?';
+}
+
+char symbol_class(Elf64_Sym *sym)
+{
+	Elf64_Shdr *sym_sec = elf64_get_section_by_ndx(sym->st_shndx);
+	uint32_t flags = elf_get_flags_for_section(sym_sec);
+	char c = '?';
+	if (sym->st_shndx == SHN_COMMON)
+	{
+		if (flags & SEC_SMALL_DATA)
+			return 'c';
+		else
+			return 'C';
+	}
+	if (sym->st_shndx == SHN_UNDEF)
+	{
+		if (ELF64_ST_BIND(sym->st_info) & STB_WEAK)
+		{
+			if (ELF64_ST_TYPE(sym->st_info) & STT_OBJECT)
+				return 'v';
+			else
+				return 'w';
+		}
+		else
+			return 'U';
+	}
+	// Add check for indirect section 'I'
+	if (ELF64_ST_TYPE(sym->st_info) & STT_GNU_IFUNC &&
+		!(ELF64_ST_TYPE(sym->st_info) & STT_FUNC))
+		return 'i';
+	if (ELF64_ST_BIND(sym->st_info) & STB_WEAK)
+	{
+		if (ELF64_ST_TYPE(sym->st_info) & STT_OBJECT)
+			return 'V';
+		else
+			return 'W';
+	}
+	// Add check for GNU_UNIQUE ? 'u'
+
+	if (sym->st_shndx == SHN_ABS)
+		c = 'a';
+	else
+		c = section_type(sym_sec);
+	if (ELF64_ST_BIND(sym->st_info) & STB_GLOBAL)
+		c = toupper(c);
+	return c;
 }
 
 void elf64_show_symbols(elf64_t *_elf)
@@ -130,13 +239,12 @@ void elf64_show_symbols(elf64_t *_elf)
 			continue;
 		if (cur->st_shndx > elf->shnum)
 			continue;
-		if (cur->st_value)
-			printf("%016lx", cur->st_value);
+		if (cur->st_shndx != SHN_UNDEF)
+			printf("%016lx ", cur->st_value);
 		else
-			printf("                ");
-		print_symbol_type(cur);
+			printf("                 ");
 
-		printf(" %s", name);
+		printf("%c %s", symbol_class(cur), name);
 		printf("\n");
 	}
 }

@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <locale.h>
 int parse_file(char *path);
 
 int main(int argc, char **argv)
 {
 	setbuf(stdout, 0);
+	setlocale(LC_ALL, "");
 	char **files = NULL;
 	int nfiles = 0;
 	if (argc > 1)
