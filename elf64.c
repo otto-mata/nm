@@ -179,9 +179,9 @@ char symbol_class(Elf64_Sym *sym)
 	}
 	if (sym->st_shndx == SHN_UNDEF)
 	{
-		if (ELF64_ST_BIND(sym->st_info) & STB_WEAK)
+		if (ELF64_ST_BIND(sym->st_info) == STB_WEAK)
 		{
-			if (ELF64_ST_TYPE(sym->st_info) & STT_OBJECT)
+			if (ELF64_ST_TYPE(sym->st_info) == STT_OBJECT)
 				return 'v';
 			else
 				return 'w';
@@ -190,23 +190,23 @@ char symbol_class(Elf64_Sym *sym)
 			return 'U';
 	}
 	// Add check for indirect section 'I'
-	if (ELF64_ST_TYPE(sym->st_info) & STT_GNU_IFUNC &&
-		!(ELF64_ST_TYPE(sym->st_info) & STT_FUNC))
+	if (ELF64_ST_TYPE(sym->st_info) == STT_GNU_IFUNC)
 		return 'i';
-	if (ELF64_ST_BIND(sym->st_info) & STB_WEAK)
+	if (ELF64_ST_BIND(sym->st_info) == STB_WEAK)
 	{
-		if (ELF64_ST_TYPE(sym->st_info) & STT_OBJECT)
+		if (ELF64_ST_TYPE(sym->st_info) == STT_OBJECT)
 			return 'V';
 		else
 			return 'W';
 	}
-	// Add check for GNU_UNIQUE ? 'u'
+	if (ELF64_ST_BIND(sym->st_info) == STB_GNU_UNIQUE)
+		return 'u';
 
 	if (sym->st_shndx == SHN_ABS)
 		c = 'a';
 	else
 		c = section_type(sym_sec);
-	if (ELF64_ST_BIND(sym->st_info) & STB_GLOBAL)
+	if (ELF64_ST_BIND(sym->st_info) == STB_GLOBAL)
 		c = toupper(c);
 	return c;
 }
