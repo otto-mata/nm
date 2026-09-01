@@ -17,5 +17,4 @@ fclean: clean
 
 re: fclean all
 
-i686-sample:
-	gcc -m32 -Wall -Wextra read.mmap.c -o sample.i686
+.PHONY: all clean fclean re
