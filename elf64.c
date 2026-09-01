@@ -208,6 +208,9 @@ void elf64_show_symbols(elf64_t *_elf)
 		printf("%c %s", symbol_class(cur), name);
 		printf("\n");
 	}
+	for (size_t i = 0; i < symnum; i++)
+		free(sorted_sym[i]);
+	free(sorted_sym);
 }
 elf64_t *elf64_new(void *content, size_t size)
 {

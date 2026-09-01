@@ -1,5 +1,4 @@
-#ifndef FT_NM_BFD_FLAGS_H
-#define FT_NM_BFD_FLAGS_H
+#pragma once
 #define SEC_NO_FLAGS 0x0
 
 /* Tells the OS to allocate space for this section when loading.
@@ -111,7 +110,7 @@
    should warn if any duplicate sections contain different
    contents.  */
 #define SEC_LINK_DUPLICATES_SAME_CONTENTS \
-	(SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE)
+   (SEC_LINK_DUPLICATES_ONE_ONLY | SEC_LINK_DUPLICATES_SAME_SIZE)
 
 /* This section was created by the linker as part of dynamic
    relocation or other arcane processing.  It is skipped when
@@ -189,5 +188,3 @@
    instead of bytes.  Required for DWARF debug sections as DWARF
    information is organized in octets, not bytes.  */
 #define SEC_ELF_OCTETS 0x40000000
-
-#endif /* FT_NM_BFD_FLAGS_H */
