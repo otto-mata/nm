@@ -4,6 +4,9 @@
 #define ELF_ST_BIND(val) (((unsigned char)(val)) >> 4)
 #define ELF_ST_TYPE(val) ((val) & 0xf)
 
+int is_elf(void *content);
+int parse_elf(void *content, size_t size);
+
 elf32_t *elf32_new(void *content, size_t size);
 void elf32_show_symbols(elf32_t *_elf);
 

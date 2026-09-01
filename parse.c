@@ -6,29 +6,11 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "elfxx.h"
-
-static int parse32(void *content, size_t size)
-{
-	elf32_t *elf = elf32_new(content, size);
-	if (!elf)
-		return (1);
-	elf32_show_symbols(elf);
-	free(elf);
-	return (0);
-}
-
-static int parse64(void *content, size_t size)
-{
-	elf64_t *elf = elf64_new(content, size);
-	if (!elf)
-		return (1);
-	elf64_show_symbols(elf);
-	free(elf);
-	return (0);
-}
+#include "archive.h"
 
 int parse_file(char *path)
 {
+	int ret = 0;
 	int fd = open(path, O_RDONLY);
 	if (fd < 0)
 	{
@@ -52,18 +34,10 @@ int parse_file(char *path)
 		close(fd);
 		return (6);
 	}
-	int ret = 0;
-
-	switch (((unsigned char *)content)[4])
-	{
-	case 1:
-		parse32(content, st.st_size);
-
-		break;
-	case 2:
-		parse64(content, st.st_size);
-		break;
-	}
+	if (is_elf(content))
+		ret = parse_elf(content, st.st_size);
+	if (is_ar(content))
+		ret = parse_ar(content, st.st_size);
 	munmap(content, st.st_size);
 	close(fd);
 	return (ret);

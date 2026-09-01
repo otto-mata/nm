@@ -1,7 +1,7 @@
 NAME:=nm
 CC:=clang
 CFLAGS:=-Wall -Wextra -Werror -g 
-SRC:=parse.c main.c elf32.c elf64.c
+SRC:=parse.c main.c elf32.c elf64.c elfxx.c archive.c
 OBJ:=$(SRC:.c=.o)
 
 all: $(NAME)
