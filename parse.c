@@ -12,6 +12,7 @@ static int parse32(void *content, size_t size)
 	elf32_t *elf = elf32_new(content, size);
 	if (!elf)
 		return (1);
+	elf32_show_symbols(elf);
 	free(elf);
 	return (0);
 }
@@ -21,7 +22,6 @@ static int parse64(void *content, size_t size)
 	elf64_t *elf = elf64_new(content, size);
 	if (!elf)
 		return (1);
-	// elf64_show_sections(elf);
 	elf64_show_symbols(elf);
 	free(elf);
 	return (0);

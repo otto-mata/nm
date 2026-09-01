@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <locale.h>
 #include "bfd-flags.h"
+#include "elfxx.h"
 
 static elf64_t *elf = NULL;
 
@@ -66,46 +67,6 @@ static void sortutil(Elf64_Sym *symbols[], int count)
 	qsort(symbols, count, sizeof(*symbols), sortname);
 }
 
-void elf64_show_sections()
-{
-	Elf64_Shdr *sh;
-	for (Elf64_Half i = 0; i < elf->shnum; i++)
-	{
-		sh = &elf->section_headers[i];
-		printf("section %s\n", elf64_get_section_name(sh));
-		__builtin_dump_struct(sh, printf);
-	}
-}
-
-/*
-
-  if (hdr->sh_type != SHT_NOBITS)
-	flags |= SEC_HAS_CONTENTS;
-  if (hdr->sh_type == SHT_GROUP)
-	flags |= SEC_GROUP;
-  if ((hdr->sh_flags & SHF_ALLOC) != 0)
-	{
-	  flags |= SEC_ALLOC;
-	  if (hdr->sh_type != SHT_NOBITS)
-		flags |= SEC_LOAD;
-	}
-  if ((hdr->sh_flags & SHF_WRITE) == 0)
-	flags |= SEC_READONLY;
-  if ((hdr->sh_flags & SHF_EXECINSTR) != 0)
-	flags |= SEC_CODE;
-  else if ((flags & SEC_LOAD) != 0)
-	flags |= SEC_DATA;
-  if ((hdr->sh_flags & SHF_MERGE) != 0)
-	flags |= SEC_MERGE;
-  if ((hdr->sh_flags & SHF_STRINGS) != 0)
-	flags |= SEC_STRINGS;
-  if ((hdr->sh_flags & SHF_TLS) != 0)
-	flags |= SEC_THREAD_LOCAL;
-  if ((hdr->sh_flags & SHF_EXCLUDE) != 0)
-	flags |= SEC_EXCLUDE;
-
-*/
-
 static uint32_t elf_get_flags_for_section(Elf64_Shdr *hdr)
 {
 	uint32_t flags = 0;
@@ -137,7 +98,7 @@ static uint32_t elf_get_flags_for_section(Elf64_Shdr *hdr)
 	return flags;
 }
 
-char section_type(Elf64_Shdr *section)
+static char section_type(Elf64_Shdr *section)
 {
 	uint32_t flags = elf_get_flags_for_section(section);
 	if (flags & SEC_CODE)
@@ -165,7 +126,7 @@ char section_type(Elf64_Shdr *section)
 	return '?';
 }
 
-char symbol_class(Elf64_Sym *sym)
+static char symbol_class(Elf64_Sym *sym)
 {
 	Elf64_Shdr *sym_sec = elf64_get_section_by_ndx(sym->st_shndx);
 	uint32_t flags = elf_get_flags_for_section(sym_sec);
@@ -179,9 +140,9 @@ char symbol_class(Elf64_Sym *sym)
 	}
 	if (sym->st_shndx == SHN_UNDEF)
 	{
-		if (ELF64_ST_BIND(sym->st_info) == STB_WEAK)
+		if (ELF_ST_BIND(sym->st_info) == STB_WEAK)
 		{
-			if (ELF64_ST_TYPE(sym->st_info) == STT_OBJECT)
+			if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
 				return 'v';
 			else
 				return 'w';
@@ -190,23 +151,23 @@ char symbol_class(Elf64_Sym *sym)
 			return 'U';
 	}
 	// Add check for indirect section 'I'
-	if (ELF64_ST_TYPE(sym->st_info) == STT_GNU_IFUNC)
+	if (ELF_ST_TYPE(sym->st_info) == STT_GNU_IFUNC)
 		return 'i';
-	if (ELF64_ST_BIND(sym->st_info) == STB_WEAK)
+	if (ELF_ST_BIND(sym->st_info) == STB_WEAK)
 	{
-		if (ELF64_ST_TYPE(sym->st_info) == STT_OBJECT)
+		if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
 			return 'V';
 		else
 			return 'W';
 	}
-	if (ELF64_ST_BIND(sym->st_info) == STB_GNU_UNIQUE)
+	if (ELF_ST_BIND(sym->st_info) == STB_GNU_UNIQUE)
 		return 'u';
 
 	if (sym->st_shndx == SHN_ABS)
 		c = 'a';
 	else
 		c = section_type(sym_sec);
-	if (ELF64_ST_BIND(sym->st_info) == STB_GLOBAL)
+	if (ELF_ST_BIND(sym->st_info) == STB_GLOBAL)
 		c = toupper(c);
 	return c;
 }
